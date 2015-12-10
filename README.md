@@ -1,6 +1,7 @@
 # Considerations #
 Client-side web development practices fall along a continuum based on where between the the server and client the logic is implemented. Two common approaches are server-side rendering with progressive enhancement (PE) on the client, and client-side rendering. The latter is particularly useful for single-page applications.
 
+
 ## Server-side rendering with PE ##
 This is the traditional approach to web development. Markup is rendered on the server and sent to the client in response to an HTTP request. Compared to the client-side rendering approach, the upsides of this approach are:
 
@@ -27,74 +28,7 @@ Since client-side technology evolves so fast and will continue to in the future,
 ### References ###
 [Christian Heilmann: Overboard.js](https://youtu.be/Bvs5-AilZyY?t=33m57s)
 
-# Initialization #
-Users must be able to initialize widgets in multiple ways which fall along a continuum:
-* programmatically (no existing markup)
-* progressive enhancement (existing markup + scripting)
-* declaratively (no scripting)
 
-To ease progressive enhancement and (custom) styling, markup should be minimal.
-
-Widgets should strive to modify existing markup as little as possible to keep styling and behavior.
-
-## Programmatic ##
-```js
-new Widget.Button({disabled: true}).renderTo(document.querySelector('.container'))
-```
-
-## Progressive enhancement (PE) ##
-This is the difficult one, because the library author has less control over the markup.
-
-```html
-<button class="widget-button">Go</button>  <!-- class is already set for styling -->
-```
-```js
-new Button({
-  srcNode: document.querySelector('button'),
-  label: 'Stay'
-});
-```
-
-The trick here is to sensibly parse the existing markup to extract property values (such as a button's label, checked state, etc). Properties specified programmatically override any parsed from markup.
-
-Ideally, the user can write markup that is already styled appropriately on page load (i.e. before js is run) and is "stealthily" enhanced (i.e. quickly, without flashing and reflow operations).
-
-Maybe PE is only sensible for some widgets?
-
-## Declarative ##
-```html
-<div data-widget-type="ToggleButton" data-properties="checked: true, label: 'Go'"></div>
-```
-(Alternatively, `data-checked="true" data-label="Go` ?)
-
-Instance is retrievable via `Widget.getByNode()`.
-
-# Markup #
-Markup should be kept simple (no tag soups) and should use native solutions where possible.
-
-For example, the markup for a checked and disabled toggle button could be:
-```html
-<button class="widget widget-button widget-button-toggle" disabled checked>Label</button>
-```
-By using the native `button` element and setting its `checked` and `disabled` attributes, PE works seamlessly, query selection (for styling and scripting) is easy, and the UI is accessible (especially when enhanced with ARIA).
-
-To keep the DOM in sync with the instance's properties, two-way bindings have to be set up (at least for a subset of the properties).
-
-# API #
-After initialization, the user must not make changes to the markup, and should not query markup to determine state. Instead, she has to call methods on the widget instance and / or register event handlers.
-
-For example:
-```js
-// get the instance
-let bt = Widget.getByNode(document.getElementById('myButton'));
-
-// call methods
-bt.disable()                         // alternatively: set('disabled', true) ?
-  .setLabel('Can\'t touch this!');   // alternatively: set('label', '...') ?
-
-// register event handlers
-on(bt, 'click', event => { bt.enable(); });
-```
 
 # Example #
 ![screenshot](https://github.com/drjayvee/widget-proposal/blob/master/img/dd-expanded.png)
@@ -146,3 +80,79 @@ If instead the button were never rendered disabled by the server (which degrades
 Since the `ul` has the `searchable` class, javascript will add a search input and autocomplete functionality on page load.
 
 If javascript fails, no harm is done (although the user loses some comfort if there are many options).
+
+## Conclusion ##
+The server is able to send a UI to the client which displays and behaves well "out of the box" to a large extent. Since widget markup is simple, the server can write markup that needs no changes by the client-side javascript. Furthermore, the markup structure is easy to learn for the server-side developer.
+
+
+
+# Proposal #
+
+## Initialization ##
+Users must be able to initialize widgets in multiple ways which fall along a continuum:
+* programmatically (no existing markup)
+* progressive enhancement (existing markup + scripting)
+* declaratively (no scripting)
+
+To ease progressive enhancement and (custom) styling, markup should be minimal.
+
+Widgets should strive to modify existing markup as little as possible to keep styling and behavior.
+
+### Programmatic ###
+```js
+new Widget.Button({disabled: true}).renderTo(document.querySelector('.container'))
+```
+
+### Progressive enhancement (PE) ###
+This is the difficult one, because the library author has less control over the markup.
+
+```html
+<button class="widget-button">Go</button>  <!-- class is already set for styling -->
+```
+```js
+new Button({
+  srcNode: document.querySelector('button'),
+  label: 'Stay'
+});
+```
+
+The trick here is to sensibly parse the existing markup to extract property values (such as a button's label, checked state, etc). Properties specified programmatically override any parsed from markup.
+
+Ideally, the user can write markup that is already styled appropriately on page load (i.e. before js is run) and is "stealthily" enhanced (i.e. quickly, without flashing and reflow operations).
+
+Maybe PE is only sensible for some widgets?
+
+### Declarative ###
+```html
+<div data-widget-type="ToggleButton" data-properties="checked: true, label: 'Go'"></div>
+```
+(Alternatively, `data-checked="true" data-label="Go` ?)
+
+Instance is retrievable via `Widget.getByNode()`.
+
+## Markup ##
+Markup should be kept simple (no tag soups) and should use native solutions where possible.
+
+For example, the markup for a checked and disabled toggle button could be:
+```html
+<button class="widget widget-button widget-button-toggle" disabled checked>Label</button>
+```
+By using the native `button` element and setting its `checked` and `disabled` attributes, PE works seamlessly, query selection (for styling and scripting) is easy, and the UI is accessible (especially when enhanced with ARIA).
+
+To keep the DOM in sync with the instance's properties, two-way bindings have to be set up (at least for a subset of the properties).
+
+## API ##
+After initialization, the user must not make changes to the markup, and should not query markup to determine state. Instead, she has to call methods on the widget instance and / or register event handlers.
+
+For example:
+```js
+// get the instance
+let bt = Widget.getByNode(document.getElementById('myButton'));
+
+// call methods
+bt.disable()                         // alternatively: set('disabled', true) ?
+  .setLabel('Can\'t touch this!');   // alternatively: set('label', '...') ?
+
+// register event handlers
+on(bt, 'click', event => { bt.enable(); });
+```
